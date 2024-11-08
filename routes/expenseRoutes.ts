@@ -1,4 +1,4 @@
-import { Router } from "https://deno.land/x/oak/mod.ts";
+import { Router, RouterContext } from "https://deno.land/x/oak/mod.ts";
 import { writeExpenses, readExpenses } from "../config/dbOperations.ts";
 
 // Initialize the router for expense routes
@@ -12,15 +12,15 @@ const generateExpenseId = (expenses: any[]): number => {
 };
 
 // POST endpoint to add a new expense
-expenseRoutes.post("/expenses", async (context) => {
+expenseRoutes.post("/expenses", async (context: RouterContext) => {
   try {
     // Parse the incoming request body as JSON
     const body = await context.request.body().value;
 
-    console.log("Received body:", body);
+    const { amount, category, description } = JSON.parse(body);
 
     // Check if the body contains required fields
-    if (!body.amount || !body.category || !body.description) {
+    if (!amount || !category || !description) {
       context.response.status = 400;
       context.response.body = {
         error: "Missing required fields (amount, category, description)",
@@ -35,9 +35,9 @@ expenseRoutes.post("/expenses", async (context) => {
     const newExpense = {
       id: generateExpenseId(expenses), // Generate unique ID
       date: new Date().toISOString().split("T")[0], // Use the current date (YYYY-MM-DD format)
-      amount: parseFloat(body.amount), // Ensure the amount is a number
-      category: body.category,
-      description: body.description,
+      amount: parseFloat(amount), // Ensure the amount is a number
+      category: category,
+      description: description,
     };
 
     // Add the new expense to the existing list
@@ -58,7 +58,7 @@ expenseRoutes.post("/expenses", async (context) => {
 });
 
 // GET endpoint to retrieve all expenses
-expenseRoutes.get("/expenses", async (context) => {
+expenseRoutes.get("/expenses", async (context: RouterContext) => {
   try {
     const expenses = await readExpenses(); // Read expenses from the database
     context.response.status = 200;
@@ -68,6 +68,69 @@ expenseRoutes.get("/expenses", async (context) => {
     context.response.status = 500;
     context.response.body = {
       error: "An error occurred while retrieving expenses.",
+    };
+  }
+});
+
+// Route for getting a single expense by ID
+expenseRoutes.get("/expense/:id", async (context: RouterContext) => {
+  try {
+    const { id } = context.params; // Extract the 'id' parameter from the URL
+
+    if (!id) {
+      context.response.status = 400;
+      context.response.body = { error: "Expense ID is required" };
+      return;
+    }
+
+    const expenses = await readExpenses();
+    const expense = expenses.find((exp) => exp.id === id);
+
+    if (expense) {
+      context.response.status = 200;
+      context.response.body = expense; // Return the expense
+    } else {
+      context.response.status = 404;
+      context.response.body = { error: "Expense not found" };
+    }
+  } catch (error) {
+    console.error("Error fetching expense by ID:", error);
+    context.response.status = 500;
+    context.response.body = {
+      error: "An error occurred while fetching the expense.",
+    };
+  }
+});
+
+// Route for deleting an expense by ID
+expenseRoutes.delete("/expense/:id", async (context: RouterContext) => {
+  try {
+    const { id } = context.params; // Extract the 'id' parameter from the URL
+
+    if (!id) {
+      context.response.status = 400;
+      context.response.body = { error: "Expense ID is required" };
+      return;
+    }
+
+    const expenses = await readExpenses();
+    const index = expenses.findIndex((exp) => exp.id === id);
+
+    if (index !== -1) {
+      // If the expense exists, remove it
+      expenses.splice(index, 1);
+      await writeExpenses(expenses); // Save the updated list back to the database
+      context.response.status = 200;
+      context.response.body = { message: "Expense deleted successfully!" };
+    } else {
+      context.response.status = 404;
+      context.response.body = { error: "Expense not found" };
+    }
+  } catch (error) {
+    console.error("Error deleting expense:", error);
+    context.response.status = 500;
+    context.response.body = {
+      error: "An error occurred while deleting the expense.",
     };
   }
 });

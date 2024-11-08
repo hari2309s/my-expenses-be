@@ -35,8 +35,6 @@ export const encrypt = async (
   result.set(iv); // Set the IV at the beginning
   result.set(buffer, iv.length); // Append the ciphertext after the IV
 
-  console.log("Encrypted data (IV + ciphertext):", result); // Log the encrypted data (for debugging)
-
   return result; // Return the concatenated IV + ciphertext
 };
 

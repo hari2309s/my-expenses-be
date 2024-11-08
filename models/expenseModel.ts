@@ -22,9 +22,11 @@ export const createExpense = async (
     category,
     date: new Date().toISOString(),
   };
-  console.log("adding -> ", newExpense);
+
   expenses.push(newExpense);
+
   await writeExpenses(expenses); // Write updated expenses back to the encrypted file
+
   return newExpense;
 };
 
@@ -37,10 +39,12 @@ export const getExpenses = async (): Promise<Expense[]> => {
 export const deleteExpense = async (id: number): Promise<boolean> => {
   const expenses = await readExpenses();
   const index = expenses.findIndex((expense: Expense) => expense.id === id);
+
   if (index !== -1) {
     expenses.splice(index, 1); // Remove expense from array
     await writeExpenses(expenses); // Update the encrypted database file
     return true;
   }
+
   return false; // Return false if the expense was not found
 };
