@@ -1,6 +1,5 @@
 import { Router, RouterContext } from "https://deno.land/x/oak/mod.ts";
-import { writeExpenses, readExpenses } from "../db/dbOperations.ts";
-import { ulid } from "../deps.ts";
+import { ExpenseModel } from "../models/Expense.ts";
 
 // Initialize the router for expense routes
 const expenseRoutes = new Router();
@@ -8,7 +7,7 @@ const expenseRoutes = new Router();
 // GET endpoint to retrieve all expenses
 expenseRoutes.get("/expenses", async (context: RouterContext) => {
   try {
-    const expenses = await readExpenses(); // Read expenses from the database
+    const expenses = await ExpenseModel.getAll();
     context.response.status = 200;
     context.response.body = expenses; // Return the list of expenses
   } catch (error) {
@@ -37,26 +36,17 @@ expenseRoutes.post("/expenses", async (context: RouterContext) => {
       return;
     }
 
-    // Get the current list of expenses
-    const expenses = await readExpenses();
+    const newExpense = await ExpenseModel.create({
+      amount,
+      category,
+      description,
+    });
 
-    // Generate a new expense object with automatic ID and current date
-    const newExpense = {
-      id: ulid(),
-      date: new Date().toISOString().split("T")[0], // Use the current date (YYYY-MM-DD format)
-      amount: parseFloat(amount), // Ensure the amount is a number
-      category: category,
-      description: description,
-    };
-
-    // Add the new expense to the existing list
-    expenses.push(newExpense);
-    // Save the updated list of expenses to the encrypted file
-    await writeExpenses(expenses);
-
-    // Respond with success
     context.response.status = 201;
-    context.response.body = { message: "Expense added successfully!" };
+    context.response.body = {
+      message: "Expense added successfully!",
+      expense: newExpense,
+    };
   } catch (error) {
     console.error("Error adding expense:", error);
     context.response.status = 500;
@@ -77,8 +67,7 @@ expenseRoutes.get("/expense/:id", async (context: RouterContext) => {
       return;
     }
 
-    const expenses = await readExpenses();
-    const expense = expenses.find((exp) => exp.id === +id);
+    const expense = await ExpenseModel.getById(+id);
 
     if (expense) {
       context.response.status = 200;
@@ -113,20 +102,18 @@ expenseRoutes.put("/expense/:id", async (context: RouterContext) => {
       return;
     }
 
-    const expenses = await readExpenses();
-    const expenseIndex = expenses.findIndex((exp) => exp.id === +id);
+    const updatedExpense = await ExpenseModel.updateById(+id, {
+      amount,
+      category,
+      description,
+    });
 
-    if (expenseIndex !== -1) {
-      // If the expense exists, update its details
-      expenses[expenseIndex] = {
-        ...expenses[expenseIndex], // Preserve the existing expense fields (id, date)
-        amount: parseFloat(amount),
-        category: category,
-        description: description,
-      };
-      await writeExpenses(expenses); // Save the updated list back to the database
+    if (updatedExpense) {
       context.response.status = 200;
-      context.response.body = { message: "Expense updated successfully!" };
+      context.response.body = {
+        message: "Expense updated successfully!",
+        expense: updatedExpense,
+      };
     } else {
       context.response.status = 404;
       context.response.body = { error: "Expense not found" };
@@ -151,15 +138,11 @@ expenseRoutes.delete("/expense/:id", async (context: RouterContext) => {
       return;
     }
 
-    const expenses = await readExpenses();
-    const index = expenses.findIndex((exp) => exp.id === +id);
+    const deleted = await ExpenseModel.deleteById(+id);
 
-    if (index !== -1) {
-      // If the expense exists, remove it
-      expenses.splice(index, 1);
-      await writeExpenses(expenses); // Save the updated list back to the database
+    if (deleted) {
       context.response.status = 200;
-      context.response.body = { message: "Expense deleted successfully!" };
+      context.response.body = { message: "Expense deleted successfully" };
     } else {
       context.response.status = 404;
       context.response.body = { error: "Expense not found" };
