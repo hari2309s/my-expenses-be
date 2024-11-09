@@ -11,6 +11,21 @@ const generateExpenseId = (expenses: any[]): number => {
   return maxId + 1;
 };
 
+// GET endpoint to retrieve all expenses
+expenseRoutes.get("/expenses", async (context: RouterContext) => {
+  try {
+    const expenses = await readExpenses(); // Read expenses from the database
+    context.response.status = 200;
+    context.response.body = expenses; // Return the list of expenses
+  } catch (error) {
+    console.error("Error retrieving expenses:", error);
+    context.response.status = 500;
+    context.response.body = {
+      error: "An error occurred while retrieving expenses.",
+    };
+  }
+});
+
 // POST endpoint to add a new expense
 expenseRoutes.post("/expenses", async (context: RouterContext) => {
   try {
@@ -57,21 +72,6 @@ expenseRoutes.post("/expenses", async (context: RouterContext) => {
   }
 });
 
-// GET endpoint to retrieve all expenses
-expenseRoutes.get("/expenses", async (context: RouterContext) => {
-  try {
-    const expenses = await readExpenses(); // Read expenses from the database
-    context.response.status = 200;
-    context.response.body = expenses; // Return the list of expenses
-  } catch (error) {
-    console.error("Error retrieving expenses:", error);
-    context.response.status = 500;
-    context.response.body = {
-      error: "An error occurred while retrieving expenses.",
-    };
-  }
-});
-
 // Route for getting a single expense by ID
 expenseRoutes.get("/expense/:id", async (context: RouterContext) => {
   try {
@@ -98,6 +98,50 @@ expenseRoutes.get("/expense/:id", async (context: RouterContext) => {
     context.response.status = 500;
     context.response.body = {
       error: "An error occurred while fetching the expense.",
+    };
+  }
+});
+
+// Route for editing an expense by ID
+expenseRoutes.put("/expense/:id", async (context: RouterContext) => {
+  try {
+    const { id } = context.params; // Extract the 'id' parameter from the URL
+    const body = await context.request.body().value;
+
+    const { amount, category, description } = JSON.parse(body);
+
+    // Ensure the required fields are provided
+    if (!amount || !category || !description) {
+      context.response.status = 400;
+      context.response.body = {
+        error: "Missing required fields (amount, category, description)",
+      };
+      return;
+    }
+
+    const expenses = await readExpenses();
+    const expenseIndex = expenses.findIndex((exp) => exp.id === +id);
+
+    if (expenseIndex !== -1) {
+      // If the expense exists, update its details
+      expenses[expenseIndex] = {
+        ...expenses[expenseIndex], // Preserve the existing expense fields (id, date)
+        amount: parseFloat(amount),
+        category: category,
+        description: description,
+      };
+      await writeExpenses(expenses); // Save the updated list back to the database
+      context.response.status = 200;
+      context.response.body = { message: "Expense updated successfully!" };
+    } else {
+      context.response.status = 404;
+      context.response.body = { error: "Expense not found" };
+    }
+  } catch (error) {
+    console.error("Error updating expense:", error);
+    context.response.status = 500;
+    context.response.body = {
+      error: "An error occurred while updating the expense.",
     };
   }
 });
