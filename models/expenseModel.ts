@@ -1,4 +1,4 @@
-import { readExpenses, writeExpenses } from "../config/dbOperations.ts";
+import { readExpenses, writeExpenses } from "../db/dbOperations.ts";
 
 export interface Expense {
   id: number;

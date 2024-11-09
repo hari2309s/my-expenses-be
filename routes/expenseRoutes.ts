@@ -1,15 +1,9 @@
 import { Router, RouterContext } from "https://deno.land/x/oak/mod.ts";
-import { writeExpenses, readExpenses } from "../config/dbOperations.ts";
+import { writeExpenses, readExpenses } from "../db/dbOperations.ts";
+import { ulid } from "../deps.ts";
 
 // Initialize the router for expense routes
 const expenseRoutes = new Router();
-
-// Function to generate a unique ID for each expense
-const generateExpenseId = (expenses: any[]): number => {
-  // Generate an ID based on the highest existing ID, or default to 1 if empty
-  const maxId = expenses.reduce((max, expense) => Math.max(max, expense.id), 0);
-  return maxId + 1;
-};
 
 // GET endpoint to retrieve all expenses
 expenseRoutes.get("/expenses", async (context: RouterContext) => {
@@ -48,7 +42,7 @@ expenseRoutes.post("/expenses", async (context: RouterContext) => {
 
     // Generate a new expense object with automatic ID and current date
     const newExpense = {
-      id: generateExpenseId(expenses), // Generate unique ID
+      id: ulid(),
       date: new Date().toISOString().split("T")[0], // Use the current date (YYYY-MM-DD format)
       amount: parseFloat(amount), // Ensure the amount is a number
       category: category,
