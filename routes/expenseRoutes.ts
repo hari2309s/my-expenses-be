@@ -84,7 +84,7 @@ expenseRoutes.get("/expense/:id", async (context: RouterContext) => {
     }
 
     const expenses = await readExpenses();
-    const expense = expenses.find((exp) => exp.id === id);
+    const expense = expenses.find((exp) => exp.id === +id);
 
     if (expense) {
       context.response.status = 200;
@@ -114,7 +114,7 @@ expenseRoutes.delete("/expense/:id", async (context: RouterContext) => {
     }
 
     const expenses = await readExpenses();
-    const index = expenses.findIndex((exp) => exp.id === id);
+    const index = expenses.findIndex((exp) => exp.id === +id);
 
     if (index !== -1) {
       // If the expense exists, remove it
