@@ -26,6 +26,7 @@ export class ExpenseModel {
 
     const expenses = await readExpenses();
     expenses.push(newExpense);
+
     await writeExpenses(expenses);
 
     return newExpense;
@@ -37,32 +38,38 @@ export class ExpenseModel {
   }
 
   // Get expense by ID
-  static async getById(id: number): Promise<Expense | undefined> {
+  static async getById(id: string): Promise<Expense | undefined> {
     const expenses = await readExpenses();
+
     return expenses.find((expense) => expense.id === id);
   }
 
   // Delete expense by ID
-  static async deleteById(id: number): Promise<boolean> {
+  static async deleteById(id: string): Promise<boolean> {
     const expenses = await readExpenses();
+
     const updatedExpenses = expenses.filter((expense) => expense.id !== id);
     const deleted = expenses.length !== updatedExpenses.length;
+
     if (deleted) await writeExpenses(updatedExpenses);
+
     return deleted;
   }
 
   // Update expense by ID
   static async updateById(
-    id: number,
+    id: string,
     data: Partial<Expense>
   ): Promise<Expense | null> {
     const expenses = await readExpenses();
+
     const index = expenses.findIndex((expense) => expense.id === id);
 
     if (index === -1) return null; // Expense not found
 
     // Update the existing expense with new data
     expenses[index] = { ...expenses[index], ...data };
+
     await writeExpenses(expenses);
 
     return expenses[index];

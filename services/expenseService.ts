@@ -1,22 +1,35 @@
-import {
-  Expense,
-  createExpense,
-  getExpenses,
-  deleteExpense as deleteExpenseModel,
-} from "../models/expenseModel.ts";
+import { ExpenseModel } from "../models/Expense.ts";
 
-export const getAllExpenses = (): Expense[] => {
-  return getExpenses();
-};
+export class ExpenseService {
+  // Create a new expense entry
+  static async createExpense(data: {
+    amount: number;
+    category: string;
+    description: string;
+  }) {
+    return await ExpenseModel.create(data);
+  }
 
-export const addExpense = (
-  description: string,
-  amount: number,
-  category: string
-): Expense => {
-  return createExpense(description, amount, category);
-};
+  // Retrieve all expense entries
+  static async getAllExpenses() {
+    return await ExpenseModel.getAll();
+  }
 
-export const deleteExpense = (id: number): boolean => {
-  return deleteExpenseModel(id);
-};
+  // Retrieve a single expense entry by ID
+  static async getExpenseById(id: string) {
+    return await ExpenseModel.getById(id);
+  }
+
+  // Update an expense entry by ID
+  static async updateExpense(
+    id: string,
+    data: { amount: number; category: string; description: string }
+  ) {
+    return await ExpenseModel.updateById(id, data);
+  }
+
+  // Delete an expense entry by ID
+  static async deleteExpense(id: string) {
+    return await ExpenseModel.deleteById(id);
+  }
+}

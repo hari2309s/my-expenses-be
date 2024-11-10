@@ -1,9 +1,6 @@
-import { loadEnv } from "../deps.ts";
+import { existsSync, ensureFileSync, loadEnv } from "../deps.ts";
+import { Expense } from "../models/Expense.ts";
 import { encrypt, decrypt } from "../utils/crypto.ts";
-import {
-  existsSync,
-  ensureFileSync,
-} from "https://deno.land/std@0.224.0/fs/mod.ts";
 
 const env = loadEnv();
 
@@ -18,7 +15,7 @@ const ensureDatabaseFileExists = () => {
 };
 
 // Read expenses from the encrypted JSON file
-export const readExpenses = async (): Promise<any[]> => {
+export const readExpenses = async (): Promise<Expense[]> => {
   try {
     ensureDatabaseFileExists();
 
@@ -45,7 +42,7 @@ export const readExpenses = async (): Promise<any[]> => {
 };
 
 // Write expenses to the encrypted JSON file
-export const writeExpenses = async (expenses: any[]): Promise<void> => {
+export const writeExpenses = async (expenses: Expense[]): Promise<void> => {
   try {
     ensureDatabaseFileExists(); // Ensure the file exists
 
