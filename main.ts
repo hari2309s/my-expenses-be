@@ -1,4 +1,4 @@
-import { Application } from "./deps.ts";
+import { Application, oakCors } from "./deps.ts";
 import { loadEnv } from "./deps.ts"; // Import dotenv config function
 import expenseRoutes from "./routes/expenseRoutes.ts";
 import incomeRoutes from "./routes/incomeRoutes.ts";
@@ -7,6 +7,8 @@ import incomeRoutes from "./routes/incomeRoutes.ts";
 loadEnv();
 
 const app = new Application();
+
+app.use(oakCors());
 
 // Use routes for handling requests
 app.use(expenseRoutes.routes());
